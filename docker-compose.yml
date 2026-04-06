@@ -1,6 +1,6 @@
 services:
   asa:
-    build: .
+    build: ./docker
     container_name: asa-server
     restart: unless-stopped
     ports:

@@ -52,7 +52,7 @@ WORKDIR $STEAM_HOME
 
 # Copy scripts and helpers
 COPY --chmod=755 --chown=steam:steam server.py $STEAM_HOME/server.py
-COPY --chmod=755 scripts/rcon.sh /rcon.sh
+COPY --chmod=755 rcon.sh /rcon.sh
 COPY --chmod=755 entrypoint.sh /entrypoint.sh
 
 # Expose default ports
