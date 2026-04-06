@@ -29,7 +29,7 @@ RUN dpkg --add-architecture i386 && \
 RUN locale-gen en_US.UTF-8 && \
     dbus-uuidgen > /etc/machine-id 
 
-# Install mcrcon for reliable RCON communication
+# Install mcrcon for RCON communication
 RUN wget -qO /tmp/mcrcon.tar.gz https://github.com/Tiiffi/mcrcon/releases/download/v0.7.2/mcrcon-0.7.2-linux-x86-64.tar.gz && \
     tar -xzf /tmp/mcrcon.tar.gz -C /usr/local/bin && \
     chmod +x /usr/local/bin/mcrcon && \
@@ -37,13 +37,13 @@ RUN wget -qO /tmp/mcrcon.tar.gz https://github.com/Tiiffi/mcrcon/releases/downlo
 
 # Create users and directories
 RUN useradd -m steam
-RUN mkdir -p $ASA_HOME $STEAMCMD_HOME $WINE_PREFIX
-RUN chown -R steam:steam $STEAM_HOME
+RUN mkdir -p $ASA_HOME $STEAMCMD_HOME $WINE_PREFIX && \
+    chown -R steam:steam $STEAM_HOME
 
 USER steam
 WORKDIR $STEAMCMD_HOME
 
-# Install SteamCMD (manual wget)
+# Install SteamCMD
 RUN wget -qO- https://steamcdn-a.akamaihd.net/client/installer/steamcmd_linux.tar.gz | tar -xvz -C $STEAMCMD_HOME
 
 # Back to root for permissions management
@@ -54,6 +54,6 @@ WORKDIR $STEAM_HOME
 COPY --chmod=755 entrypoint.py /entrypoint.py
 
 # Expose default ports
-EXPOSE 7777/udp 27015/udp 27020/udp
+EXPOSE 7777/udp 27015/udp 27020/tcp
 
 ENTRYPOINT ["python3", "/entrypoint.py"]

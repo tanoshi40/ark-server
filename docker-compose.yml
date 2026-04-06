@@ -6,19 +6,17 @@ services:
     ports:
       - "7777:7777/udp"
       - "27015:27015/udp"
-      - "27020:27020"
+      - "27020:27020/tcp"
     volumes:
-      - ./data/asa:/home/steam/asa        # ASA installation + saves + configs
-      - ./data/wineprefix:/home/steam/wineprefix   # persist Wine prefix
-      - ./backups:/steam/backups      # Optional: backup folder
+      - ./data/asa:/home/steam/asa
+      - ./data/wineprefix:/home/steam/wineprefix
+      - ./backups:/steam/backups
     environment:
       - WINEDEBUG=-all
       - SESSION_NAME=${SESSION_NAME}
       - SERVER_PASSWORD=${SERVER_PASSWORD}
       - ADMIN_PASSWORD=${ADMIN_PASSWORD}
-      - RCON_PASSWORD=${RCON_PASSWORD}
       - GAME_PORT=${GAME_PORT}
       - QUERY_PORT=${QUERY_PORT}
       - RCON_PORT=${RCON_PORT}
       - MAP_NAME=${MAP_NAME}
-

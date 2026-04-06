@@ -9,7 +9,7 @@ from pathlib import Path
 # ----------------------------------------------------------------------
 # Configuration (read from environment)
 # ----------------------------------------------------------------------
-STEAM_HOME = Path(os.environ.get("STEAM_HOME", "/home/steam"))
+STEAM_HOME = Path(os.environ.get("STEAM_HOME", str(Path.home())))
 ASA_HOME = STEAM_HOME / "asa"
 STEAMCMD_HOME = STEAM_HOME / "steamcmd"
 WINE_PREFIX = STEAM_HOME / "wineprefix"
@@ -25,13 +25,11 @@ RCON_PORT = os.environ.get("RCON_PORT", "27020")
 MAP_NAME = os.environ.get("MAP_NAME", "TheIsland_WP")
 MAX_PLAYERS = os.environ.get("MAX_PLAYERS", "70")
 
-# Paths
+# Wine environment
 os.environ["WINEPREFIX"] = str(WINE_PREFIX)
 os.environ["WINEARCH"] = "win64"
 os.environ["DISPLAY"] = ":0"
 
-# ----------------------------------------------------------------------
-# Helper functions
 # ----------------------------------------------------------------------
 def log(msg: str):
     print(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] {msg}", flush=True)
@@ -66,7 +64,6 @@ def set_ini_value(file_path: Path, section: str, key: str, value: str):
             continue
         new_lines.append(line)
     if not key_found:
-        # Add after section header, or create section at end
         for i, line in enumerate(new_lines):
             if line.strip() == section_header:
                 new_lines.insert(i+1, f"{key}={value}")
@@ -78,7 +75,11 @@ def set_ini_value(file_path: Path, section: str, key: str, value: str):
 
 def install_asa():
     log("Installing ASA via SteamCMD...")
-    cmd = f'"{STEAMCMD_HOME}/steamcmd.sh" +force_install_dir "{ASA_HOME}" +login anonymous +app_update 2430930 validate +quit'
+    steamcmd = STEAMCMD_HOME / "steamcmd.sh"
+    if not steamcmd.exists():
+        log(f"SteamCMD not found at {steamcmd}")
+        sys.exit(1)
+    cmd = f'"{steamcmd}" +force_install_dir "{ASA_HOME}" +login anonymous +app_update 2430930 validate +quit'
     run_cmd(cmd, check=True)
     if not ASA_EXE.exists():
         log("ERROR: ASA executable not found after installation.")
@@ -90,7 +91,6 @@ def ensure_configs():
     game_user_settings = CONFIG_DIR / "GameUserSettings.ini"
     if not game_user_settings.exists():
         game_user_settings.touch()
-    # Ensure [ServerSettings] section exists and RCON values are set
     set_ini_value(game_user_settings, "ServerSettings", "RCONEnabled", "True")
     set_ini_value(game_user_settings, "ServerSettings", "RCONPort", RCON_PORT)
     set_ini_value(game_user_settings, "ServerSettings", "ServerAdminPassword", ADMIN_PASSWORD)
@@ -112,15 +112,13 @@ def start_asa():
         f"-WinLiveMaxPlayers={MAX_PLAYERS}"
     ]
     log(f"Launching server: {' '.join(cmd)}")
-    # Use subprocess.Popen with process group so we can send signals properly
+    # Start in a new process group so we can kill everything later
     proc = subprocess.Popen(cmd, preexec_fn=os.setsid)
     return proc
 
 def graceful_shutdown(proc):
     log("SIGTERM received – saving world via RCON...")
-    # Give the server a moment to be ready (adjust if needed)
     time.sleep(2)
-    # Use mcrcon to send saveworld
     rcon_cmd = [
         "/usr/local/bin/mcrcon",
         "-H", "localhost",
@@ -132,36 +130,32 @@ def graceful_shutdown(proc):
         subprocess.run(rcon_cmd, timeout=10, check=False)
         log("Save command sent.")
     except Exception as e:
-        log(f"RCON save failed (server may be unresponsive): {e}")
-    log("Waiting 10 seconds for save to complete...")
+        log(f"RCON save failed: {e}")
+    log("Waiting 10 seconds...")
     time.sleep(10)
-    log("Sending SIGINT to the server process...")
+    log("Sending SIGINT to server process group...")
     os.killpg(os.getpgid(proc.pid), signal.SIGINT)
     proc.wait(timeout=30)
     log("Shutdown complete.")
 
 def main():
-    # 1. Prepare Wine prefix
+    # 1. Initialize Wine prefix (as steam user)
     log("Initializing Wine prefix...")
     run_cmd("wineboot --init", check=False)
 
-    # 2. Install ASA if missing
     if not ASA_EXE.exists():
         install_asa()
 
-    # 3. Ensure config files exist and RCON is enabled
     ensure_configs()
-
-    # 4. Start the server
     proc = start_asa()
 
-    # 5. Register signal handler for SIGTERM (docker stop)
+    # Register graceful shutdown
     def handler(signum, frame):
         graceful_shutdown(proc)
         sys.exit(0)
     signal.signal(signal.SIGTERM, handler)
 
-    # 6. Wait for the process to finish naturally
+    # Wait for exit
     try:
         proc.wait()
     except KeyboardInterrupt:
