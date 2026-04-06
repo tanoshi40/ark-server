@@ -11,4 +11,3 @@ source "$(dirname "$0")/../.env"
 
 # Use ADMIN_PASSWORD for RCON authentication
 docker exec asa-server mcrcon -H localhost -P "$RCON_PORT" -p "$ADMIN_PASSWORD" "$1"
-

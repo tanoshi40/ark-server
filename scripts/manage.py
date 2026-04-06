@@ -11,8 +11,29 @@ PROJECT_DIR = Path(__file__).parent.parent
 DATA_DIR = PROJECT_DIR / "data"
 BACKUP_DIR = PROJECT_DIR / "backups"
 
+docker_compose = None
+
+def get_compose_cmd():
+    global docker_compose
+
+    if docker_compose is not None:
+        return docker_compose
+
+    try:
+        subprocess.run(["docker-compose", "--version"], capture_output=True, check=True)
+        docker_compose = ["docker-compose"]
+        return docker_compose
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        try:
+            subprocess.run(["docker", "compose", "version"], capture_output=True, check=True)
+            docker_compose = ["docker", "compose"]
+            return docker_compose
+        except (subprocess.CalledProcessError, FileNotFoundError):
+            print("Error: neither 'docker-compose' nor 'docker compose' is available.")
+            sys.exit(1)
+
 def run_compose(*args):
-    cmd = ["docker-compose", "-f", COMPOSE_FILE] + list(args)
+    cmd = get_compose_cmd() + ["-f", COMPOSE_FILE] + list(args)
     subprocess.run(cmd, check=True)
 
 def cmd_start(args):
@@ -27,8 +48,8 @@ def cmd_update(args):
     
     # We use a similar logic as in server.py to see real-time output
     # The volumes should match what is in docker-compose.yml
-    cmd = [
-        "docker-compose", "-f", COMPOSE_FILE, "run", "--rm", "asa",
+    cmd = get_compose_cmd() + [
+        "-f", COMPOSE_FILE, "run", "--rm", "asa",
         "/home/steam/steamcmd/steamcmd.sh",
         "+force_install_dir", "/home/steam/asa",
         "+login", "anonymous",
