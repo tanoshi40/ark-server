@@ -59,6 +59,8 @@ def cmd_attach(args):
         run_compose("attach", "asa")
     except KeyboardInterrupt:
         print("\nDetaching and stopping server...")
+        # Wait for the container to stop
+        run_compose("wait", "asa")
 
 
 def cmd_update(args):
