@@ -20,3 +20,4 @@ services:
       - RCON_PORT=${RCON_PORT}
       - MAP_NAME=${MAP_NAME}
       - MOD_IDS=${MOD_IDS}
+      - CUSTOM_START_PARAMS=${CUSTOM_START_PARAMS}

@@ -16,16 +16,17 @@ WINE_PREFIX = STEAM_HOME / "wineprefix"
 ASA_EXE = ASA_HOME / "ShooterGame/Binaries/Win64/ArkAscendedServer.exe"
 CONFIG_DIR = ASA_HOME / "ShooterGame/Saved/Config/WindowsServer"
 
-SESSION_NAME = os.environ.get("SESSION_NAME", "MyASA")
-SERVER_PASSWORD = os.environ.get("SERVER_PASSWORD", "password")
-ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "adminpass")
-GAME_PORT = os.environ.get("GAME_PORT", "7777")
-QUERY_PORT = os.environ.get("QUERY_PORT", "27015")
-RCON_PORT = os.environ.get("RCON_PORT", "27020")
-MAP_NAME = os.environ.get("MAP_NAME", "TheIsland_WP")
-MAX_PLAYERS = os.environ.get("MAX_PLAYERS", "70")
+SESSION_NAME = os.environ.get("SESSION_NAME", "MyASA").strip()
+SERVER_PASSWORD = os.environ.get("SERVER_PASSWORD", "password").strip()
+ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "adminpass").strip()
+GAME_PORT = os.environ.get("GAME_PORT", "7777").strip()
+QUERY_PORT = os.environ.get("QUERY_PORT", "27015").strip()
+RCON_PORT = os.environ.get("RCON_PORT", "27020").strip()
+MAP_NAME = os.environ.get("MAP_NAME", "TheIsland_WP").strip()
+MAX_PLAYERS = os.environ.get("MAX_PLAYERS", "70").strip()
 
 MOD_IDS = os.environ.get("MOD_IDS", "").strip()
+CUSTOM_START_PARAMS = os.environ.get("CUSTOM_START_PARAMS", "").strip()
 
 # Wine environment
 os.environ["WINEPREFIX"] = str(WINE_PREFIX)
@@ -157,6 +158,15 @@ def start_asa():
     mod_arg = setup_mods()
     if mod_arg:
         cmd.append(mod_arg)
+
+    # Add custom start parameters if any are configured
+    if CUSTOM_START_PARAMS:
+        # Split by space to handle multiple parameters if provided as a single string
+        # though appending as a single string might also work if we use shell=True, 
+        # but subprocess.Popen with a list is safer without shell=True.
+        # Wait, server.py uses shell=True in run_cmd, but start_asa uses a list without shell=True.
+        # So we should split by space.
+        cmd.extend(CUSTOM_START_PARAMS.split())
 
     log(f"Launching server: {' '.join(cmd)}")
     # Start in a new process group so we can kill everything later
