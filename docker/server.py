@@ -25,6 +25,8 @@ RCON_PORT = os.environ.get("RCON_PORT", "27020")
 MAP_NAME = os.environ.get("MAP_NAME", "TheIsland_WP")
 MAX_PLAYERS = os.environ.get("MAX_PLAYERS", "70")
 
+MOD_IDS = os.environ.get("MOD_IDS", "").strip()
+
 # Wine environment
 os.environ["WINEPREFIX"] = str(WINE_PREFIX)
 os.environ["WINEARCH"] = "win64"
@@ -99,6 +101,31 @@ def install_asa():
         log("ERROR: ASA executable not found after installation.")
         sys.exit(1)
 
+def setup_mods():
+    """Add mod IDs to GameUserSettings.ini and prepare command-line args."""
+    if not MOD_IDS:
+        return ""
+
+    # Clean the mod IDs: remove spaces, split by comma
+    mod_list = [mod_id.strip() for mod_id in MOD_IDS.split(",") if mod_id.strip()]
+    if not mod_list:
+        return ""
+
+    # Format the mod list for config and command line
+    mods_str = ",".join(mod_list)
+    log(f"Setting up mods: {mods_str}")
+
+    # Add ActiveMods to GameUserSettings.ini under [ServerSettings]
+    game_user_settings = CONFIG_DIR / "GameUserSettings.ini"
+    if not game_user_settings.exists():
+        game_user_settings.touch()
+
+    # Use the existing set_ini_value function (or similar) to add/update ActiveMods
+    set_ini_value(game_user_settings, "ServerSettings", "ActiveMods", mods_str)
+
+    # Return the command-line argument for the server startup
+    return f"-mods={mods_str}"
+
 def ensure_configs():
     """Create default config files if missing, and inject RCON settings."""
     CONFIG_DIR.mkdir(parents=True, exist_ok=True)
@@ -125,6 +152,12 @@ def start_asa():
         f"-RCONPort={RCON_PORT}",
         f"-WinLiveMaxPlayers={MAX_PLAYERS}"
     ]
+
+    # Add mod command-line arguments if any mods are configured
+    mod_arg = setup_mods()
+    if mod_arg:
+        cmd.append(mod_arg)
+
     log(f"Launching server: {' '.join(cmd)}")
     # Start in a new process group so we can kill everything later
     proc = subprocess.Popen(cmd, preexec_fn=os.setsid)
