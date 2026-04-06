@@ -10,7 +10,6 @@ services:
     volumes:
       - ./data/asa:/home/steam/asa
       - ./data/wineprefix:/home/steam/wineprefix
-      - ./backups:/steam/backups
     environment:
       - WINEDEBUG=-all
       - SESSION_NAME=${SESSION_NAME}

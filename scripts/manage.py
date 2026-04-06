@@ -64,12 +64,27 @@ def cmd_backup(args):
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     backup_file = BACKUP_DIR / f"asa_{timestamp}.tar.gz"
     BACKUP_DIR.mkdir(exist_ok=True)
-    subprocess.run([
-        "tar", "-czf", str(backup_file),
-        "-C", str(PROJECT_DIR),
-        "data/saves", "data/config"
-    ], check=True)
-    print(f"Backup created: {backup_file}")
+
+    # Use MAP_NAME from env or default
+    map_name = os.environ.get("MAP_NAME", "TheIsland_WP")
+
+    # Target items:
+    # 1. data/asa/ShooterGame/Saved/SavedArks/<mapname>/...
+    # 2. data/asa/ShooterGame/Saved/Config/WindowsServer/...
+    # Note: ShooterGame (singular) is the directory name in ARK
+    save_path = f"data/asa/ShooterGame/Saved/SavedArks/{map_name}"
+    config_path = "data/asa/ShooterGame/Saved/Config/WindowsServer"
+
+    print(f"Creating backup of {save_path} and {config_path}...")
+    try:
+        subprocess.run([
+            "tar", "-czf", str(backup_file),
+            "-C", str(PROJECT_DIR),
+            save_path, config_path
+        ], check=True)
+        print(f"Backup created: {backup_file}")
+    except subprocess.CalledProcessError as e:
+        print(f"Error: Backup failed. {e}")
 
 def cmd_rcon(args):
     # Use docker exec to call mcrcon inside the container
@@ -81,7 +96,7 @@ def cmd_rcon(args):
         "mcrcon", "-H", "localhost", "-P", rcon_port,
         "-p", admin_password, args.command
     ]
-    subprocess.run(cmd)
+    subprocess.run(cmd, check=True)
 
 def main():
     parser = argparse.ArgumentParser(description="ASA Server Manager")
