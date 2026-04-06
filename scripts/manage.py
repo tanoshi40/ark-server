@@ -24,7 +24,19 @@ def cmd_stop(args):
 def cmd_update(args):
     # Stop, run SteamCMD update, leave stopped
     cmd_stop(args)
-    subprocess.run(["./scripts/update_steamcmd.sh"], check=True)  # or integrate directly
+    
+    # We use a similar logic as in server.py to see real-time output
+    # The volumes should match what is in docker-compose.yml
+    cmd = [
+        "docker-compose", "-f", COMPOSE_FILE, "run", "--rm", "asa",
+        "/home/steam/steamcmd/steamcmd.sh",
+        "+force_install_dir", "/home/steam/asa",
+        "+login", "anonymous",
+        "+app_update", "2430930", "validate",
+        "+quit"
+    ]
+    print(f"Running update: {' '.join(cmd)}")
+    subprocess.run(cmd, check=True)
     print("Update finished. Server is stopped. Use 'start' to relaunch.")
 
 def cmd_backup(args):
@@ -40,10 +52,13 @@ def cmd_backup(args):
 
 def cmd_rcon(args):
     # Use docker exec to call mcrcon inside the container
+    rcon_port = os.environ.get("RCON_PORT", "27020")
+    admin_password = os.environ.get("ADMIN_PASSWORD", "adminpass")
+
     cmd = [
         "docker", "exec", "-i", "asa-server",
-        "mcrcon", "-H", "localhost", "-P", os.environ["RCON_PORT"],
-        "-p", os.environ["ADMIN_PASSWORD"], args.command
+        "mcrcon", "-H", "localhost", "-P", rcon_port,
+        "-p", admin_password, args.command
     ]
     subprocess.run(cmd)
 
