@@ -16,5 +16,5 @@ else
     START_CMD=("$@")
 fi
 
-echo "[PRE] Dropping to steam user and starting command: $START_CMD"
+echo "[PRE] Dropping to steam user and starting command: ${START_CMD[*]}"
 exec setpriv --reuid=steam --regid=steam --init-groups "${START_CMD[@]}"
