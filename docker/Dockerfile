@@ -9,6 +9,7 @@ ENV WINE_PREFIX=$STEAM_HOME/wineprefix
 ENV WINEPREFIX=$WINE_PREFIX
 ENV WINEARCH=win64
 ENV DISPLAY=:0
+ENV XDG_CACHE_HOME=$STEAM_HOME/.cache
 ENV PATH=$PATH:$STEAMCMD_HOME
 
 ENV LANG=en_US.UTF-8
@@ -22,9 +23,9 @@ RUN dpkg --add-architecture i386 && \
         lib32gcc-s1 lib32stdc++6 libgl1-mesa-dri:i386 \
         procps ca-certificates \
         python3 python3-pip locales dbus \
-        wine64 wine32 && \
-     apt clean && \
-     rm -rf /var/lib/apt/lists/*
+        wine64 wine32 fontconfig && \
+    apt clean && \
+    rm -rf /var/lib/apt/lists/*
 
 RUN locale-gen en_US.UTF-8 && \
     dbus-uuidgen > /etc/machine-id 
@@ -36,7 +37,9 @@ RUN wget -qO /tmp/mcrcon.tar.gz https://github.com/Tiiffi/mcrcon/releases/downlo
     rm /tmp/mcrcon.tar.gz
 
 # Create users and directories
-RUN useradd -m steam
+RUN useradd -m steam && \
+    mkdir -p /var/cache/fontconfig && \
+    chmod 777 /var/cache/fontconfig
 RUN mkdir -p $ASA_HOME $STEAMCMD_HOME $WINE_PREFIX && \
     chown -R steam:steam $STEAM_HOME
 
