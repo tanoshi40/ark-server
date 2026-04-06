@@ -48,11 +48,17 @@ def cmd_stop(args):
 
 
 def cmd_logs(args):
-    run_compose("logs", "-f")
+    try:
+        run_compose("logs", "-f")
+    except KeyboardInterrupt:
+        print("\nExiting logs...")
 
 
 def cmd_attach(args):
-    run_compose("attach", "asa")
+    try:
+        run_compose("attach", "asa")
+    except KeyboardInterrupt:
+        print("\nDetaching and stopping server...")
 
 
 def cmd_update(args):
