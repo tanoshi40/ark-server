@@ -1,9 +1,9 @@
+# My ignored
+_*/
+
 # Docker data and volumes
 data/
 backups/
-
-# Project specific
-old_settings/
 
 # Secrets and environment variables
 .env
