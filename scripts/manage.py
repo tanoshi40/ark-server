@@ -52,7 +52,7 @@ def cmd_logs(args):
 
 
 def cmd_attach(args):
-    run_compose("attach")
+    run_compose("attach", "asa")
 
 
 def cmd_update(args):
