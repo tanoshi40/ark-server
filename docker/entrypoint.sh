@@ -10,5 +10,11 @@ echo "[PRE] Ensuring expected directories exist and fixing permissions on mounte
 mkdir -p "$ASA_HOME" "$STEAMCMD_HOME" "$WINE_PREFIX"
 chown -R steam:steam "$STEAM_HOME" 2>/dev/null || true
 
-echo "[PRE] Dropping to steam user and starting Python entrypoint..."
-exec setpriv --reuid=steam --regid=steam --init-groups python3 "$STEAM_HOME/server.py"
+if [ $# -eq 0 ]; then
+    START_CMD=("python3" "$STEAM_HOME/server.py")
+else
+    START_CMD=("$@")
+fi
+
+echo "[PRE] Dropping to steam user and starting command: $START_CMD"
+exec setpriv --reuid=steam --regid=steam --init-groups "${START_CMD[@]}"
