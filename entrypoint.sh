@@ -11,4 +11,4 @@ mkdir -p "$ASA_HOME" "$STEAMCMD_HOME" "$WINE_PREFIX"
 chown -R steam:steam "$STEAM_HOME" 2>/dev/null || true
 
 echo "[PRE] Dropping to steam user and starting Python entrypoint..."
-exec su - steam -c "python3 $STEAM_HOME/server.py"
+exec setpriv --reuid=steam --regid=steam --init-groups python3 "$STEAM_HOME/server.py"
