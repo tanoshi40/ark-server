@@ -91,10 +91,13 @@ def cmd_rcon(args):
     rcon_port = os.environ.get("RCON_PORT", "27020")
     admin_password = os.environ.get("ADMIN_PASSWORD", "adminpass")
 
+    # Join the command parts if they were passed separately
+    rcon_command = " ".join(args.rcon_command)
+
     cmd = [
         "docker", "exec", "-i", "asa-server",
         "mcrcon", "-H", "localhost", "-P", rcon_port,
-        "-p", admin_password, args.command
+        "-p", admin_password, rcon_command
     ]
     subprocess.run(cmd, check=True)
 
@@ -107,7 +110,7 @@ def main():
     subparsers.add_parser("update", help="Update server (stops first, leaves stopped)")
     subparsers.add_parser("backup", help="Backup saves and config")
     rcon_parser = subparsers.add_parser("rcon", help="Send RCON command")
-    rcon_parser.add_argument("command", help="RCON command (e.g., 'saveworld')")
+    rcon_parser.add_argument("rcon_command", nargs="+", help="RCON command (e.g., 'saveworld')")
 
     args = parser.parse_args()
     if args.command == "start":
