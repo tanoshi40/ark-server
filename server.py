@@ -133,13 +133,7 @@ def start_asa():
 def graceful_shutdown(proc):
     log("SIGTERM received – saving world via RCON...")
     time.sleep(2)
-    rcon_cmd = [
-        "/usr/local/bin/mcrcon",
-        "-H", "localhost",
-        "-P", RCON_PORT,
-        "-p", ADMIN_PASSWORD,
-        "saveworld"
-    ]
+    rcon_cmd = ["/rcon.sh", "saveworld"]
     try:
         subprocess.run(rcon_cmd, timeout=10, check=False)
         log("Save command sent.")

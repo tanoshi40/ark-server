@@ -87,17 +87,12 @@ def cmd_backup(args):
         print(f"Error: Backup failed. {e}")
 
 def cmd_rcon(args):
-    # Use docker exec to call mcrcon inside the container
-    rcon_port = os.environ.get("RCON_PORT", "27020")
-    admin_password = os.environ.get("ADMIN_PASSWORD", "adminpass")
-
-    # Join the command parts if they were passed separately
+    # Use docker exec to call /rcon.sh inside the container
     rcon_command = " ".join(args.rcon_command)
 
     cmd = [
         "docker", "exec", "-i", "asa-server",
-        "mcrcon", "-H", "localhost", "-P", rcon_port,
-        "-p", admin_password, rcon_command
+        "/rcon.sh", rcon_command
     ]
     subprocess.run(cmd, check=True)
 
