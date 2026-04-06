@@ -153,7 +153,7 @@ def graceful_shutdown(proc):
     log("Shutdown complete.")
 
 def main():
-    # 1. Initialize Wine prefix (as steam user)
+    log("Running as steam user – starting server")
     log("Initializing Wine prefix...")
     run_cmd("wineboot --init", check=False)
 

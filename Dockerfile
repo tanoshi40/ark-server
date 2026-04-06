@@ -51,9 +51,9 @@ USER root
 WORKDIR $STEAM_HOME
 
 # Copy scripts and helpers
-COPY --chmod=755 entrypoint.py /entrypoint.py
+COPY --chmod=755 server.py $STEAM_HOME/server.py
 
 # Expose default ports
 EXPOSE 7777/udp 27015/udp 27020/tcp
 
-ENTRYPOINT ["python3", "/entrypoint.py"]
+ENTRYPOINT ["/bin/bash", "/entrypoint.sh"]
