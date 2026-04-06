@@ -175,18 +175,25 @@ def start_asa():
 
 def graceful_shutdown(proc):
     log("SIGTERM received – saving world via RCON...")
-    time.sleep(2)
     rcon_cmd = ["/rcon.sh", "saveworld"]
     try:
-        subprocess.run(rcon_cmd, timeout=10, check=False)
-        log("Save command sent.")
+        # mcrcon usually waits for the command to complete and returns the server's response.
+        # We can capture the output and log it for confirmation.
+        result = subprocess.run(rcon_cmd, capture_output=True, text=True, timeout=30, check=False)
+        if result.stdout:
+            log(f"RCON output: {result.stdout.strip()}")
+        log("Save command completed.")
     except Exception as e:
         log(f"RCON save failed: {e}")
-    log("Waiting 10 seconds...")
-    time.sleep(10)
+
     log("Sending SIGINT to server process group...")
-    os.killpg(os.getpgid(proc.pid), signal.SIGINT)
-    proc.wait(timeout=30)
+    time.sleep(2)
+    try:
+        os.killpg(os.getpgid(proc.pid), signal.SIGINT)
+        proc.wait(timeout=60)
+    except subprocess.TimeoutExpired:
+        log("Server did not exit gracefully, sending SIGKILL...")
+        os.killpg(os.getpgid(proc.pid), signal.SIGKILL)
     log("Shutdown complete.")
 
 def main():
