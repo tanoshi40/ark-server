@@ -36,11 +36,25 @@ def log(msg: str):
 
 def run_cmd(cmd, check=True, cwd=None):
     log(f"Running: {cmd}")
-    result = subprocess.run(cmd, shell=True, cwd=cwd, capture_output=True, text=True)
-    if check and result.returncode != 0:
-        log(f"ERROR: {result.stderr}")
-        sys.exit(result.returncode)
-    return result
+    process = subprocess.Popen(
+        cmd,
+        shell=True,
+        cwd=cwd,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True,
+        bufsize=1
+    )
+
+    for line in process.stdout:
+        print(line, end="", flush=True)
+
+    process.wait()
+    if check and process.returncode != 0:
+        log(f"ERROR: Command failed with return code {process.returncode}")
+        sys.exit(process.returncode)
+
+    return process
 
 def set_ini_value(file_path: Path, section: str, key: str, value: str):
     """Ensure the key exists under the given section, replacing if present."""
