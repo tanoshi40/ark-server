@@ -62,7 +62,7 @@ def cmd_update(args):
     run_compose(
         "run", "--rm", "asa",
         "/home/steam/steamcmd/steamcmd.sh",
-        "+force_install_dir", "/home/steam/asa",
+        "+force_install_dir", "\"/home/steam/asa\"",
         "+login", "anonymous",
         "+app_update", "2430930", "validate",
         "+quit"
