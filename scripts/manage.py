@@ -13,6 +13,7 @@ BACKUP_DIR = PROJECT_DIR / "backups"
 
 docker_compose = None
 
+
 def get_compose_cmd():
     global docker_compose
 
@@ -32,33 +33,43 @@ def get_compose_cmd():
             print("Error: neither 'docker-compose' nor 'docker compose' is available.")
             sys.exit(1)
 
+
 def run_compose(*args):
     cmd = get_compose_cmd() + ["-f", COMPOSE_FILE] + list(args)
     subprocess.run(cmd, check=True)
 
+
 def cmd_start(args):
     run_compose("up", "-d")
+
 
 def cmd_stop(args):
     run_compose("down")
 
+
+def cmd_logs(args):
+    run_compose("logs", "-f")
+
+
+def cmd_attach(args):
+    run_compose("attach")
+
+
 def cmd_update(args):
     # Stop, run SteamCMD update, leave stopped
     cmd_stop(args)
-    
-    # We use a similar logic as in server.py to see real-time output
-    # The volumes should match what is in docker-compose.yml
-    cmd = get_compose_cmd() + [
-        "-f", COMPOSE_FILE, "run", "--rm", "asa",
+
+    run_compose(
+        "run", "--rm", "asa",
         "/home/steam/steamcmd/steamcmd.sh",
         "+force_install_dir", "/home/steam/asa",
         "+login", "anonymous",
         "+app_update", "2430930", "validate",
         "+quit"
-    ]
-    print(f"Running update: {' '.join(cmd)}")
-    subprocess.run(cmd, check=True)
+    )
+
     print("Update finished. Server is stopped. Use 'start' to relaunch.")
+
 
 def cmd_backup(args):
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -86,6 +97,7 @@ def cmd_backup(args):
     except subprocess.CalledProcessError as e:
         print(f"Error: Backup failed. {e}")
 
+
 def cmd_rcon(args):
     # Use docker exec to call /rcon.sh inside the container
     rcon_command = " ".join(args.rcon_command)
@@ -96,12 +108,15 @@ def cmd_rcon(args):
     ]
     subprocess.run(cmd, check=True)
 
+
 def main():
     parser = argparse.ArgumentParser(description="ASA Server Manager")
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     subparsers.add_parser("start", help="Start the server")
     subparsers.add_parser("stop", help="Stop the server")
+    subparsers.add_parser("logs", help="View server logs (tails)")
+    subparsers.add_parser("attach", help="Attach to the server session")
     subparsers.add_parser("update", help="Update server (stops first, leaves stopped)")
     subparsers.add_parser("backup", help="Backup saves and config")
     rcon_parser = subparsers.add_parser("rcon", help="Send RCON command")
@@ -112,12 +127,17 @@ def main():
         cmd_start(args)
     elif args.command == "stop":
         cmd_stop(args)
+    elif args.command == "logs":
+        cmd_logs(args)
+    elif args.command == "attach":
+        cmd_attach(args)
     elif args.command == "update":
         cmd_update(args)
     elif args.command == "backup":
         cmd_backup(args)
     elif args.command == "rcon":
         cmd_rcon(args)
+
 
 if __name__ == "__main__":
     main()
