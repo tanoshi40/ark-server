@@ -51,10 +51,9 @@ USER root
 WORKDIR $STEAM_HOME
 
 # Copy scripts and helpers
-COPY --chmod=755 entrypoint.sh /entrypoint.sh
-COPY --chmod=755 run_asa.sh $STEAM_HOME/run_asa.sh
+COPY --chmod=755 entrypoint.py /entrypoint.py
 
 # Expose default ports
 EXPOSE 7777/udp 27015/udp 27020/udp
 
-CMD ["bash", "/entrypoint.sh"]
+ENTRYPOINT ["python3", "/entrypoint.py"]
